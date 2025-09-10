@@ -1,64 +1,31 @@
-// Replace with your Apps Script web app URL
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwl73pAvmU4RFwxdBASLhPOXcqqFssbgdIxrSGrMQPJSqjLpmbLaa99RhDJ_U-Ow5wf/exec";
+// ===== CONFIG =====
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxFKdblNelCgH0RONjt-lvI0QZzgmMXGVdU3uQMaJBliBzqQOoJhbNA3FAzLcm2dTeP/exec"; 
+// Replace with your actual Apps Script Web App URL (must end in /exec)
 
-// Cached URLs
-let urlPool = [];
+// ===== URL SUBMISSION =====
+async function submitURL(event) {
+  event.preventDefault();
+  const urlInput = document.getElementById("urlInput");
+  const url = urlInput.value.trim();
 
-// Fetch dynamic list from Google Sheets
-async function fetchUrls() {
-  try {
-    const res = await fetch(SCRIPT_URL + "?action=get");
-    const data = await res.json();
-    urlPool = data.urls || [];
-  } catch (err) {
-    console.error("Error fetching URLs:", err);
-  }
-}
-
-// Redirect to random URL
-function goRandom() {
-  if (urlPool.length === 0) {
-    showMessage("No URLs available yet.", "error");
-    return;
-  }
-  const randomUrl = urlPool[Math.floor(Math.random() * urlPool.length)];
-  window.location.href = randomUrl;
-}
-
-// Submit new URL
-async function submitUrl() {
-  const input = document.getElementById("urlInput");
-  let newUrl = input.value.trim();
-
-  if (!newUrl.startsWith("http://") && !newUrl.startsWith("https://")) {
-    showMessage("Please enter a valid URL starting with http(s).", "error");
+  if (!url) {
+    showMessage("⚠️ Please enter a URL.", "error");
     return;
   }
 
   try {
-    // Simple "is alive" check
-    const check = await fetch(newUrl, { method: "HEAD", mode: "no-cors" });
-    // (No guarantee, but will usually pass if not totally dead)
-  } catch {
-    showMessage("That site seems unreachable.", "error");
-    return;
-  }
-
-  try {
-    const res = await fetch(SCRIPT_URL, {
+    const response = await fetch(SCRIPT_URL, {
       method: "POST",
-      mode: "cors",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "add", url: newUrl })
+      body: JSON.stringify({ url }),
+      headers: { "Content-Type": "application/json" }
     });
-    const result = await res.json();
+
+    const result = await response.json();
 
     if (result.status === "success") {
       showMessage("✅ Link added to index!", "success");
-      input.value = "";
-      await fetchUrls(); // refresh list
-    } else if (result.status === "duplicate") {
-      showMessage("⚠️ That link is already in the index.", "error");
+      urlInput.value = ""; // clear input box
+      await fetchUrls();   // refresh list
     } else {
       showMessage("❌ Failed to add link.", "error");
     }
@@ -68,7 +35,31 @@ async function submitUrl() {
   }
 }
 
-// Show temporary message
+// ===== RANDOM SITE =====
+async function goRandom() {
+  if (urls.length === 0) {
+    showMessage("⚠️ No URLs available yet.", "error");
+    return;
+  }
+  const randomUrl = urls[Math.floor(Math.random() * urls.length)];
+  window.location.href = randomUrl; // open in same tab
+}
+
+// ===== FETCH ALL URLS =====
+let urls = [];
+
+async function fetchUrls() {
+  try {
+    const response = await fetch(SCRIPT_URL);
+    urls = await response.json();
+    console.log("Fetched URLs:", urls);
+  } catch (err) {
+    console.error("Fetch error:", err);
+    showMessage("⚠️ Could not load URLs.", "error");
+  }
+}
+
+// ===== MESSAGES =====
 function showMessage(text, type) {
   const msg = document.getElementById("message");
   msg.textContent = text;
@@ -76,9 +67,10 @@ function showMessage(text, type) {
   setTimeout(() => { msg.className = "hidden"; }, 2500);
 }
 
-// Event listeners
+// ===== EVENT LISTENERS =====
 document.getElementById("randomBtn").addEventListener("click", goRandom);
-document.getElementById("submitBtn").addEventListener("click", submitUrl);
+document.getElementById("submitBtn").addEventListener("click", submitURL);
 
-// Initial fetch
+// ===== INITIALIZE =====
 fetchUrls();
+
