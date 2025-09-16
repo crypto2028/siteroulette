@@ -29,10 +29,10 @@ randomBtn.addEventListener("click", async () => {
   window.open(url, "_blank");
 });
 
-// Submit new URL
+// Submit new URL (accept anything, no validation)
 submitBtn.addEventListener("click", async () => {
   const url = urlInput.value.trim();
-  if (!url) return showMessage("Please enter a URL", "error");
+  if (!url) return showMessage("❌ Please enter a URL", "error");
 
   try {
     const res = await fetch(SCRIPT_URL, {
@@ -47,7 +47,7 @@ submitBtn.addEventListener("click", async () => {
       urlInput.value = "";
       await fetchUrls(); // update local URL cache
     } else {
-      showMessage(`❌ ${data.message}`, "error");
+      showMessage("❌ Failed to add URL", "error");
     }
   } catch (err) {
     console.error("Submit error:", err);
@@ -67,3 +67,4 @@ function showMessage(msg, type) {
 
 // Initial fetch
 fetchUrls();
+
