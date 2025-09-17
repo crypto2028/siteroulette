@@ -29,29 +29,22 @@ randomBtn.addEventListener("click", async () => {
   window.open(url, "_blank");
 });
 
-// Submit new URL
+// Submit new URL via GET (no CORS issues)
 submitBtn.addEventListener("click", async () => {
-  const url = urlInput.value.trim();
-  if (!url) return showMessage("Please enter a URL", "error");
+  const url = encodeURIComponent(urlInput.value.trim());
+  if (!url) return showMessage("❌ Please enter a URL", "error");
 
   try {
-    const res = await fetch(SCRIPT_URL, {
-      method: "POST",
-      body: JSON.stringify({ url }),   // Send JSON
-      headers: {
-        "Content-Type": "application/json", // Explicit header
-        "Accept": "application/json"
-      }
-    });
-
+    // GET request with URL as query parameter
+    const res = await fetch(`${SCRIPT_URL}?url=${url}`);
     const data = await res.json();
 
-    if (data.success) {
+    if (data.urls && data.urls.includes(decodeURIComponent(url))) {
       showMessage("✅ URL added!", "success");
       urlInput.value = "";
-      await fetchUrls(); // refresh cache
+      urlList = data.urls; // refresh local cache
     } else {
-      showMessage(`❌ ${data.message}`, "error");
+      showMessage("❌ Failed to add URL", "error");
     }
   } catch (err) {
     console.error("Submit error:", err);
