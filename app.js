@@ -1,4 +1,4 @@
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbweUaj-BrO_6fGgNNP-uyyK-Z0t2yWrs97MfvBU8molutlq0NIrfYO71Ynoii4lWd_K/exec"; // replace with your Apps Script /exec URL
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbweUaj-BrO_6fGgNNP-uyyK-Z0t2yWrs97MfvBU8molutlq0NIrfYO71Ynoii4lWd_K/exec";
 
 const randomBtn = document.getElementById("randomBtn");
 const submitBtn = document.getElementById("submitBtn");
@@ -29,25 +29,29 @@ randomBtn.addEventListener("click", async () => {
   window.open(url, "_blank");
 });
 
-// Submit new URL (accept anything, no validation)
+// Submit new URL
 submitBtn.addEventListener("click", async () => {
   const url = urlInput.value.trim();
-  if (!url) return showMessage("❌ Please enter a URL", "error");
+  if (!url) return showMessage("Please enter a URL", "error");
 
   try {
     const res = await fetch(SCRIPT_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url })
+      body: JSON.stringify({ url }),   // Send JSON
+      headers: {
+        "Content-Type": "application/json", // Explicit header
+        "Accept": "application/json"
+      }
     });
+
     const data = await res.json();
 
     if (data.success) {
       showMessage("✅ URL added!", "success");
       urlInput.value = "";
-      await fetchUrls(); // update local URL cache
+      await fetchUrls(); // refresh cache
     } else {
-      showMessage("❌ Failed to add URL", "error");
+      showMessage(`❌ ${data.message}`, "error");
     }
   } catch (err) {
     console.error("Submit error:", err);
@@ -67,4 +71,3 @@ function showMessage(msg, type) {
 
 // Initial fetch
 fetchUrls();
-
